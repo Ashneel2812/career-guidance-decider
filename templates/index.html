@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Career Chatbot</title>
+    <style>
+         body {
+            font-family: Arial, sans-serif;
+            background-image: url("/static/job.gif");
+            background-size: 50%;
+            background-position: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            background-color: #fff;
+            font-family: 'Comic Sans MS', cursive;
+            border: 5px solid blue;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 800px;
+            max-width: 90%;
+            overflow: hidden;
+            height:600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-history {
+            flex: 1;
+            max-height: 450px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .user-message,
+        .bot-message {
+            margin-bottom: 20px;
+        }
+
+        .user-message {
+            text-align: left;
+            color: blue;
+            font-size: 20px;
+        }
+
+        .bot-message {
+            text-align: left;
+            color: green;
+            font-size: 20px;
+        }
+
+        .input-form {
+            display: flex;
+            padding: 15px;
+        }
+
+        .input-form input[type="text"] {
+            flex: 1;
+            font-family: 'Comic Sans MS', cursive;
+            padding: 12px;
+            font-size: 20px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            border: 2px solid blue;
+        }
+
+        .input-form input[type="submit"] {
+            margin-left: 10px;
+            font-family: 'Comic Sans MS', cursive;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            background-color: blue;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .input-form input[type="submit"]:hover {
+            background-color: navy; /* Change background color */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Add shadow effect */
+        }
+        .banner {
+            background-color: blue;
+            font-family: 'Comic Sans MS', cursive;
+            color: white;
+            padding: 5px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="banner">
+        Career Chatbot
+    </div>
+    <div class="chat-container">
+        <div class="chat-history" id="chat-history">
+            <!-- Chat history will appear here -->
+        </div>
+        <form class="input-form" id="user-input-form">
+            <input type="text" id="user-input" placeholder="Type your query...">
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let chatHistory = document.getElementById('chat-history');
+
+            function appendUserMessage(message) {
+                chatHistory.innerHTML += '<div class="user-message">You: ' + message + '</div><hr>';
+            }
+
+            function appendBotMessage(message) {
+                chatHistory.innerHTML += '<div class="bot-message">' + message + '</div><hr>';
+            }
+
+            document.getElementById('user-input-form').addEventListener('submit', function(event) {
+                event.preventDefault();
+                let userInput = document.getElementById('user-input').value.trim();
+                if (userInput !== '') {
+                    appendUserMessage(userInput);
+                    sendUserQuery(userInput);
+                    document.getElementById('user-input').value = '';
+                }
+            });
+
+            function sendUserQuery(query) {
+                fetch('/result', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'user_input=' + encodeURIComponent(query)
+                })
+                .then(response => response.text())
+                .then(data => {
+                    appendBotMessage(data);
+                    chatHistory.scrollTop = chatHistory.scrollHeight;
+                });
+            }
+
+            // Initial welcome messages
+            let welcomeMessage = "Chatbot :Hello, I am a Career Chatbot. Here are the options:";
+            let welcomeMessage2 = "1. About :Enter About in chat area to know about Chatbot";
+            let welcomeMessage3 = "2. Capabilities :Enter Capabilities in chat area to know capabilites of Chatbot";
+            let welcomeMessage4 = "3. Recommend A Career :Enter Recommend in chat area to takeup the test. All the anwers for the question are between 0-100";
+            let welcomeMessage5 = "4. AI :Enter AI in chat area to enter the AI mode for career recommendation";
+
+            appendBotMessage(welcomeMessage);
+            appendBotMessage(welcomeMessage2);
+            appendBotMessage(welcomeMessage3);
+            appendBotMessage(welcomeMessage4);
+            appendBotMessage(welcomeMessage5);
+        });
+    </script>
+</body>
+</html>
