@@ -6,9 +6,9 @@ from flask import Flask, render_template, request, redirect, send_file
 from flask import url_for
 import os
 import io
+from dotenv import load_dotenv
 from openai import OpenAI
-openai_client = OpenAI(api_key="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")
-
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 matplotlib.use('Agg')
 app = Flask(__name__)
