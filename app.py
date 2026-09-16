@@ -1,4 +1,3 @@
-import joblib
 import matplotlib.pyplot as plt
 import matplotlib
 import seaborn as sns
@@ -6,12 +5,16 @@ from flask import Flask, render_template, request, redirect, send_file
 from flask import url_for
 import os
 import io
+import requests
 from dotenv import load_dotenv
 from openai import OpenAI
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 matplotlib.use('Agg')
 app = Flask(__name__)
+BENTO_PREDICT_URL = os.getenv(
+    "BENTO_PREDICT_URL", "http://localhost:3000/predict"
+)
 
 initial_questions = [
     "mbti20. I prefer small gatherings over large parties.",
@@ -126,11 +129,6 @@ aptitude_responses = []
 ocean_question_counter = 0
 aptitude_responses_counter = 0
 
-# Load the scaler and model
-scaler = joblib.load('1_scaler.pkl')  # Loading the scaler
-model = joblib.load('1_svm_model.pkl')  # Loading the trained model
-
-
 @app.route('/')
 def home():
     # Initial welcome message displayed on the web page
@@ -138,21 +136,23 @@ def home():
         "Chatbot: Hello! I am a career counseling expert with a specialization in the Indian education system. I am here to provide guidance and information to help individuals navigate their academic and professional journeys. How can I assist you today?")
     return render_template('index.html')
 
+
 def predict_career(avg_scores):
     global total_score
-    # Use the loaded scaler and model to predict the career category
     avg_scores = list(avg_scores)
     print(avg_scores)
 
     total_score = avg_scores[4]
     print(f"total score : {total_score}")
-    avg_scores = avg_scores[:4]
-    print(f"average score : {avg_scores}")
 
-    features_scaled = scaler.transform([avg_scores])
-    print(f"scaled features : {features_scaled}")
-    model_output = model.predict(features_scaled)[0]
-    print(f"model output : {model_output}")
+    response = requests.post(
+        BENTO_PREDICT_URL,
+        json={"features": avg_scores[:4]},
+        timeout=10,
+    )
+    response.raise_for_status()
+    model_output = response.json()["prediction"]
+    print(f"model output from BentoML: {model_output}")
 
     return model_output, total_score
 

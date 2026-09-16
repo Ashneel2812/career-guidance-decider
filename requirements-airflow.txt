@@ -1,0 +1,6 @@
+joblib
+mlflow
+bentoml
+requests
+pandas
+scikit-learn
