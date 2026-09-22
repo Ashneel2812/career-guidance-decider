@@ -4,3 +4,6 @@ bentoml
 requests
 pandas
 scikit-learn
+psycopg2-binary
+boto3
+skops

@@ -16,13 +16,22 @@ from sklearn.svm import SVC
 
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = SCRIPT_ROOT.parent
-DATA_PATH = Path(
-    os.getenv("TRAINING_DATA_PATH", str(PROJECT_ROOT / "synthetic_data.csv"))
+configured_data_path = os.getenv("TRAINING_DATA_PATH")
+DATA_PATH = Path(configured_data_path) if configured_data_path else next(
+    (
+        candidate
+        for candidate in (
+            PROJECT_ROOT / "synthetic_data.csv",
+            SCRIPT_ROOT / "synthetic_data.csv",
+        )
+        if candidate.exists()
+    ),
+    PROJECT_ROOT / "synthetic_data.csv",
 )
 MODEL_PATH = PROJECT_ROOT / "1_svm_model.pkl"
 SCALER_PATH = PROJECT_ROOT / "1_scaler.pkl"
 MLRUNS_PATH = PROJECT_ROOT / "mlruns"
-EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "career-recommendation")
+EXPERIMENT_NAME = os.getenv("MLFLOW_EXPERIMENT_NAME", "career-recommendation-s3")
 REGISTERED_MODEL_NAME = os.getenv(
     "MLFLOW_REGISTERED_MODEL_NAME", "career-recommendation-svm"
 )
@@ -34,6 +43,12 @@ def train_model() -> dict[str, object]:
     import mlflow
     import mlflow.sklearn
     from mlflow import MlflowClient
+
+    if not DATA_PATH.is_file():
+        raise FileNotFoundError(
+            f"Training data not found at {DATA_PATH}. Mount synthetic_data.csv "
+            "into /opt/airflow/dags or set TRAINING_DATA_PATH to its container path."
+        )
 
     data = pd.read_csv(DATA_PATH)
     features = data.iloc[:, :-1].values
@@ -56,7 +71,11 @@ def train_model() -> dict[str, object]:
     joblib.dump(scaler, SCALER_PATH)
     joblib.dump(model, MODEL_PATH)
 
-    mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI", MLRUNS_PATH.as_uri()))
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI")
+    if not tracking_uri:
+        raise RuntimeError("MLFLOW_TRACKING_URI must be configured for Airflow")
+
+    mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(EXPERIMENT_NAME)
     with mlflow.start_run() as run:
         mlflow.log_metric("accuracy", accuracy)
@@ -72,7 +91,7 @@ def train_model() -> dict[str, object]:
             )
             registered_version = model_info.registered_model_version
             if registered_version is not None:
-                MlflowClient().set_registered_model_alias(
+                MlflowClient(tracking_uri=tracking_uri).set_registered_model_alias(
                     REGISTERED_MODEL_NAME, "prod", registered_version
                 )
 

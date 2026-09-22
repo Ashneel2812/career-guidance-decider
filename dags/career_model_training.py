@@ -17,7 +17,7 @@ from scripts.training import train_model
 with DAG(
     dag_id="career_model_training",
     start_date=datetime(2024, 1, 1),
-    schedule=None,
+    schedule="0 * * * *",
     catchup=False,
     tags=["ml", "training"],
 ) as dag:

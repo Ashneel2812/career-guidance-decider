@@ -13,7 +13,8 @@ import mlflow.sklearn
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 MLFLOW_TRACKING_URI = os.getenv(
-    "MLFLOW_TRACKING_URI", (PROJECT_ROOT / "mlruns").as_uri()
+    "MLFLOW_TRACKING_URI",
+    "http://mlflow:5000",
 )
 MLFLOW_REGISTERED_MODEL_NAME = os.getenv(
     "MLFLOW_REGISTERED_MODEL_NAME", "career-recommendation-svm"
